@@ -4,6 +4,7 @@
 #r "C:\Program Files\workspacer\plugins\workspacer.FocusIndicator\workspacer.FocusIndicator.dll"
 
 using System;
+using System.Linq;
 using workspacer;
 using workspacer.Bar;
 using workspacer.ActionMenu;
@@ -16,10 +17,17 @@ Action<IConfigContext> doConfig = (context) =>
 
     context.AddBar();
     context.AddFocusIndicator();
-    var actionMenu = context.AddActionMenu();
+    //var actionMenu = context.AddActionMenu();
 
-    context.WorkspaceContainer.CreateWorkspaces("1", "2", "3", "4", "5");
+    //context.WorkspaceContainer.CreateWorkspaces("1", "2", "3", "4", "5");
     context.CanMinimizeWindows = true; // false by default
+
+    var monitors = context.MonitorContainer.GetAllMonitors();
+
+    foreach (var mon in monitors)
+    {
+        context.WorkspaceContainer.CreateWorkspace(mon.Index.ToString(), new ILayoutEngine[0]);
+    }
 
     var MainModKey = KeyModifiers.LAlt;
     var ShiftMod = KeyModifiers.Shift;
@@ -72,14 +80,21 @@ Action<IConfigContext> doConfig = (context) =>
     context.Keybinds.Subscribe(MainModKey, Keys.L,
             () => context.Workspaces.SwitchToNextWorkspace(), "switch to next workspace");
 
+    context.Keybinds.Subscribe(MainModKey | ShiftMod, Keys.H,
+            () => context.Workspaces.MoveFocusedWindowAndSwitchToPreviousWorkspace(), "move window to previous workspace");
+
+    context.Keybinds.Subscribe(MainModKey | ShiftMod, Keys.L,
+            () => context.Workspaces.MoveFocusedWindowAndSwitchToNextWorkspace(), "move window to next workspace");
+
+    // Register Alt+Shift+N to create a new workspacer
+    context.Keybinds.Subscribe(MainModKey, Keys.OemSemicolon, () => {
+            var num_workspaces = context.WorkspaceContainer.GetAllWorkspaces().Count();
+            context.WorkspaceContainer.CreateWorkspace((num_workspaces + 1).ToString());
+            }, "Create new workspace");
+
+
     context.Keybinds.Subscribe(MainModKey, Keys.N,
             () => context.Workspaces.SwitchFocusToNextMonitor(), "switch to next monitor");
-
-    context.Keybinds.Subscribe(MainModKey, Keys.L,
-            () => context.Workspaces.MoveFocusedWindowToNextWorkspace(), "move window to next workspace");
-
-    context.Keybinds.Subscribe(MainModKey, Keys.N,
-            () => context.Workspaces.MoveFocusedWindowToNextMonitor(), "move window to next monitor");
 
     context.Keybinds.Subscribe(MainModKey | CtrlMod, Keys.N,
             () => context.Workspaces.SwitchFocusToPreviousMonitor(), "switch to previous monitor");
@@ -88,7 +103,7 @@ Action<IConfigContext> doConfig = (context) =>
             () => context.Workspaces.MoveFocusedWindowToNextMonitor(), "move window to next monitor");
 
     context.Keybinds.Subscribe(MainModKey | ShiftMod | CtrlMod, Keys.N,
-            () => context.Workspaces.MoveFocusedWindowToPreviousMonitor(), "move window to next monitor");
+            () => context.Workspaces.MoveFocusedWindowToPreviousMonitor(), "move window to previous monitor");
 
     //context.Keybinds.Subscribe(MainModKey | KeyModifiers.LShift, Keys.I,
     //        () => context.Windows.DumpWindowDebugOutput(), "dump debug info to console for all windows");
